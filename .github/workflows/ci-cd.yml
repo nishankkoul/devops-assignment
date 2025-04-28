@@ -39,5 +39,7 @@ jobs:
       - name: Optional: Rollback on failure
         if: failure()
         run: |
-          # Implement rollback logic if needed, for example:
-          docker stack rollback myapp
+          echo "Deployment failed. Rolling back..."
+          # Add rollback logic here
+          # Example (Note: 'docker stack rollback' doesn't exist, you would need to redeploy an older image manually)
+          # docker service update --image nishankkoul/pearlthoughts-devops-assignment:previous_tag myapp_service
