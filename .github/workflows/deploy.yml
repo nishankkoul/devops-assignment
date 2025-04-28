@@ -81,7 +81,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd hello-world-yii2
+            cd hello-world-yii
             git pull origin main
             docker pull ${{ env.IMAGE_NAME }}:${{ env.new_tag }}
             docker stack deploy -c docker-compose.yml myapp
