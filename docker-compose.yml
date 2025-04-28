@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   php:
-    image: nishankkoul/pearlthoughts-devops-assignment:1.7
+    image: nishankkoul/pearlthoughts-devops-assignment:1.8
     volumes:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
