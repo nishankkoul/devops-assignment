@@ -69,7 +69,7 @@ jobs:
           git add docker-compose.yml
           git commit -m "Update image tag to ${{ env.new_tag }} [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/nishankkoul/pearlthoughts-assignment.git
-          git push
+          git push origin main
 
       - name: SSH into EC2 and Deploy
         uses: appleboy/ssh-action@v0.1.7
