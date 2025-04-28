@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for Docker Swarm Deployment
+name: CI/CD Pipeline for Docker Swarm Deployment with Rollback
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
 
 jobs:
   deploy:
-    name: Build, Push Docker Image, and Deploy to Swarm
+    name: Build, Push Docker Image, Deploy to Swarm, and Rollback on Failure
     runs-on: ubuntu-latest
 
     env:
       IMAGE_NAME: nishankkoul/pearlthoughts-devops-assignment
       COMPOSE_FILE: docker-compose.yml
       SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-      SSH_USER: ${{ secrets.EC2_USER }}                 # Change if different
+      SSH_USER: ${{ secrets.EC2_USER }}
       SSH_HOST: ${{ secrets.EC2_HOST }}
 
     steps:
@@ -72,13 +72,32 @@ jobs:
           git push origin main
 
       - name: SSH into EC2 and Deploy
+        id: deploy_app
+        uses: appleboy/ssh-action@v0.1.7
+        continue-on-error: true  # <--- IMPORTANT: Don't fail pipeline immediately
+        with:
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd hello-world-yii2
+            git pull origin main
+            docker pull ${{ env.IMAGE_NAME }}:${{ env.new_tag }}
+            docker stack deploy -c docker-compose.yml myapp
+
+      - name: Rollback if Deployment Failed
+        if: steps.deploy_app.outcome == 'failure'
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
-            cd hello-world-yii2          
-            git pull origin main          # Ensure the latest code is pulled
-            docker pull ${{ env.IMAGE_NAME }}:${{ env.new_tag }}
+            echo "Deployment failed! Rolling back to previous version..."
+            cd hello-world-yii2
+            sed -i "s|${{ env.IMAGE_NAME }}:${{ env.new_tag }}|${{ env.IMAGE_NAME }}:${{ env.latest_tag }}|" ${{ env.COMPOSE_FILE }}
+            git checkout -- docker-compose.yml  # Reset the compose file
+            docker pull ${{ env.IMAGE_NAME }}:${{ env.latest_tag }}
             docker stack deploy -c docker-compose.yml myapp
+            echo "Rollback to version ${{ env.latest_tag }} completed!"
