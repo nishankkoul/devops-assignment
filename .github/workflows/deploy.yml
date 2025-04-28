@@ -69,7 +69,7 @@ jobs:
           git add docker-compose.yml
           git commit -m "Update image tag to ${{ env.new_tag }} [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/nishankkoul/pearlthoughts-assignment.git
-          git push origin mai
+          git push origin main
 
       - name: SSH into EC2 and Deploy
         id: deploy_app
@@ -81,7 +81,7 @@ jobs:
           key: ${{ env.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd hello-world-yii2
+            cd hello-world-yii
             git pull origin main
             docker pull ${{ env.IMAGE_NAME }}:${{ env.new_tag }}
             docker stack deploy -c docker-compose.yml myapp
