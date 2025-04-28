@@ -6,4 +6,7 @@ services:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
     ports:
-      - '8000:80'
+      - '8080:80'  # Map host port 8080 to container port 80
+    environment:
+      - VIRTUAL_HOST=localhost  # You can use this if you want to define a virtual host
+
