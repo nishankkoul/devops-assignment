@@ -1,11 +1,13 @@
+version: '3.8'
+
 services:
   php:
-    image: nishankkoul/pearlthoughts-devops-assignment:latest  # Use your custom image here
+    image: nishankkoul/pearlthoughts-devops-assignment:v1  # This should be the correct image reference
     volumes:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
     ports:
-      - '8080:80'
+      - '8080:8080'
     restart: always
     deploy:
       replicas: 2
@@ -16,3 +18,4 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
