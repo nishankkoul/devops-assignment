@@ -1,4 +1,5 @@
-version: '3'
+version: '3.8'  # Ensure you're using the version compatible with Swarm
+
 services:
   php:
     image: yiisoftware/yii2-php:8.2-apache
@@ -8,4 +9,13 @@ services:
     ports:
       - '8080:80'  # Exposes container port 80 on host port 8080
     restart: always
+    deploy:
+      replicas: 2  # Number of replicas to run in the swarm
+      resources:
+        limits:
+          cpus: '0.50'  # Limit to 50% CPU
+          memory: 512M  # Limit memory to 512 MB
+      update_config:
+        parallelism: 1  # Deploy one replica at a time to avoid downtime during updates
+        delay: 10s  # Delay between updating each replica
 
