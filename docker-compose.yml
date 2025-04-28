@@ -1,21 +1,21 @@
-version: '3.8'  # Ensure you're using the version compatible with Swarm
+version: '3.8'
 
 services:
   php:
-    image: yiisoftware/yii2-php:8.2-apache
+    image: nishankkoul/pearlthoughts-devops-assignment:latest  # Use your custom image here
     volumes:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
     ports:
-      - '8080:80'  # Exposes container port 80 on host port 8080
+      - '8080:80'
     restart: always
     deploy:
-      replicas: 2  # Number of replicas to run in the swarm
+      replicas: 2
       resources:
         limits:
-          cpus: '0.50'  # Limit to 50% CPU
-          memory: 512M  # Limit memory to 512 MB
+          cpus: '0.50'
+          memory: 512M
       update_config:
-        parallelism: 1  # Deploy one replica at a time to avoid downtime during updates
-        delay: 10s  # Delay between updating each replica
+        parallelism: 1
+        delay: 10s
 
