@@ -23,7 +23,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker compose -f docker-compose.yml build
+          docker compose -f docker-compose.yml build --no-cache
           docker compose -f docker-compose.yml push
 
       - name: SSH into EC2 and update Docker Swarm
