@@ -4,6 +4,6 @@ $this->title = 'Pearlthoughts DevOps Assignment'; // Set the title here
 ?>
 
 <div class="site-index">
-    <h1>Hello World - N Koul</h1> <!-- Custom heading -->
+    <h1>Hello</h1> <!-- Custom heading -->
 </div>
 
