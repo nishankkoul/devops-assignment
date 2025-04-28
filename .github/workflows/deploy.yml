@@ -62,11 +62,13 @@ jobs:
           sed -i "s|${{ env.IMAGE_NAME }}:.*|${{ env.IMAGE_NAME }}:${{ env.new_tag }}|" ${{ env.COMPOSE_FILE }}
           cat ${{ env.COMPOSE_FILE }}
 
-      - name: Upload updated docker-compose.yml as an artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: updated-compose
-          path: ${{ env.COMPOSE_FILE }}
+      - name: Commit and push docker-compose.yml changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docker-compose.yml
+          git commit -m "Update image tag to ${{ env.new_tag }} [skip ci]" || echo "No changes to commit"
+          git push
 
       - name: SSH into EC2 and Deploy
         uses: appleboy/ssh-action@v0.1.7
