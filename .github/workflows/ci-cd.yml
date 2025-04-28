@@ -35,11 +35,3 @@ jobs:
           script: |
             docker pull nishankkoul/pearlthoughts-devops-assignment:latest
             docker stack deploy -c docker-compose.yml myapp
-
-      - name: Optional: Rollback on failure
-        if: failure()
-        run: |
-          echo "Deployment failed. Rolling back..."
-          # Add rollback logic here
-          # Example (Note: 'docker stack rollback' doesn't exist, you would need to redeploy an older image manually)
-          # docker service update --image nishankkoul/pearlthoughts-devops-assignment:previous_tag myapp_service
