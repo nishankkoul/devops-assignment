@@ -1,10 +1,11 @@
-version: '2'
+version: '3'
 services:
   php:
-    image: yiisoftware/yii2-php:8.2-apache   # Updated to PHP 8.2 image
+    image: yiisoftware/yii2-php:8.2-apache
     volumes:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
     ports:
-      - '8080:80'  # Changed the port to 8080 as requested
+      - '8080:80'  # Exposes container port 80 on host port 8080
+    restart: always
 
