@@ -44,7 +44,7 @@ jobs:
           if [ -z "${{ env.latest_tag }}" ]; then
             new_tag="1.0"
           else
-            new_tag=$(awk "BEGIN {print ${{ env.latest_tag }} + 0.1}")
+            new_tag=$(awk "BEGIN {printf \"%.1f\", ${{ env.latest_tag }} + 0.1}")
           fi
           echo "New tag: $new_tag"
           echo "new_tag=$new_tag" >> $GITHUB_ENV
@@ -59,14 +59,14 @@ jobs:
 
       - name: Update docker-compose.yml with New Image Tag
         run: |
-          sed -i "s|${{ env.IMAGE_NAME }}:.*|${{ env.IMAGE_NAME }}:${{ env.new_tag }}|" ${{ env.COMPOSE_FILE }}
+          sed -i "s|${{ env.IMAGE_NAME }}:[0-9.]*|${{ env.IMAGE_NAME }}:${{ env.new_tag }}|" ${{ env.COMPOSE_FILE }}
           cat ${{ env.COMPOSE_FILE }}
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docker-compose.yml
+          git add ${{ env.COMPOSE_FILE }}
           git commit -m "Update image tag to ${{ env.new_tag }} [skip ci]" || echo "No changes to commit"
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/nishankkoul/pearlthoughts-assignment.git
           git push origin main
@@ -74,7 +74,7 @@ jobs:
       - name: SSH into EC2 and Deploy
         id: deploy_app
         uses: appleboy/ssh-action@v0.1.7
-        continue-on-error: true  # <--- IMPORTANT: Don't fail pipeline immediately
+        continue-on-error: true
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
@@ -96,8 +96,8 @@ jobs:
           script: |
             echo "Deployment failed! Rolling back to previous version..."
             cd hello-world-yii2
-            sed -i "s|${{ env.IMAGE_NAME }}:${{ env.new_tag }}|${{ env.IMAGE_NAME }}:${{ env.latest_tag }}|" ${{ env.COMPOSE_FILE }}
-            git checkout -- docker-compose.yml  # Reset the compose file
+            sed -i "s|${{ env.IMAGE_NAME }}:[0-9.]*|${{ env.IMAGE_NAME }}:${{ env.latest_tag }}|" ${{ env.COMPOSE_FILE }}
+            git checkout -- docker-compose.yml
             docker pull ${{ env.IMAGE_NAME }}:${{ env.latest_tag }}
             docker stack deploy -c docker-compose.yml myapp
             echo "Rollback to version ${{ env.latest_tag }} completed!"
