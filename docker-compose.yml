@@ -17,3 +17,10 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:8080/"]
+      interval: 30s
+      retries: 3
+      timeout: 10s
+      start_period: 10s
+
