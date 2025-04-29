@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   php:
-    image: nishankkoul/pearlthoughts-devops-assignment:2.1
+    image: nishankkoul/pearlthoughts-devops-assignment:2.2
     volumes:
       - ./:/app:delegated
     ports:
