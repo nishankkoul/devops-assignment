@@ -1,0 +1,102 @@
+---
+- hosts: localhost
+  become: yes
+
+  vars:
+    ansible_connection: local
+    project_dir: "/home/ubuntu/pearlthoughts-devops-assignment"  # Set the path to your Yii2 project
+
+  tasks:
+    - name: Install Docker, Docker Compose, Git, PHP, and NGINX
+      apt:
+        update_cache: yes
+        name:
+          - docker.io
+          - docker-compose
+          - git
+          - nginx
+          - php
+          - php-fpm
+          - php-xml
+          - php-mbstring
+        state: present
+
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Clone the Yii2 repository
+      git:
+        repo: "https://github.com/nishankkoul/pearlthoughts-assignment.git"
+        dest: "{{ project_dir }}"
+        version: main
+
+    - name: Install Composer
+      shell: |
+        curl -sS https://getcomposer.org/installer | php
+        mv composer.phar /usr/local/bin/composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: Install PHP dependencies using Composer
+      command: composer install
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Install yii2-bootstrap5 via Composer
+      composer:
+        command: require
+        arguments: yiisoft/yii2-bootstrap5
+        working_dir: "{{ project_dir }}"
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: 1
+
+    - name: Set alias for yii2-bootstrap5 in web.php
+      lineinfile:
+        path: "{{ project_dir }}/config/web.php"
+        regexp: '/Yii::setAlias/'
+        line: "Yii::setAlias('@yii2-bootstrap5', dirname(__DIR__) . '/vendor/yiisoft/yii2-bootstrap5');"
+        insertafter: "components:"
+
+    - name: Initialize Docker Swarm
+      shell: |
+        docker swarm init || true
+
+    - name: Check Docker Swarm status
+      shell: docker info | grep "Swarm"
+      register: swarm_status
+      changed_when: false
+
+    - name: Debug Swarm status
+      debug:
+        var: swarm_status.stdout
+
+    - name: Pull the latest Docker image
+      shell: |
+        docker pull nishankkoul/pearlthoughts-devops-assignment:2.4
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Deploy Stack (if you have a docker-compose.yml in your repo)
+      shell: |
+        docker stack deploy -c docker-compose.yml myapp
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Configure NGINX for Yii2 App
+      template:
+        src: "/home/ubuntu/nginx.conf.j2"
+        dest: "/etc/nginx/sites-available/default"
+
+    - name: Restart NGINX
+      service:
+        name: nginx
+        state: restarted
