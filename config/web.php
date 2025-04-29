@@ -13,7 +13,6 @@ $config = [
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'sdf9h4hsd98f3n8d9fnsdf934fn34',
         ],
         'cache' => [
@@ -29,7 +28,6 @@ $config = [
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
-            // send all mails to a file by default.
             'useFileTransport' => true,
         ],
         'log' => [
@@ -42,33 +40,32 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [
+        'i18n' => [
+            'translations' => [
+                'yii/bootstrap5' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@yii2-bootstrap5/messages',
+                ],
             ],
         ],
+        /*
+        'urlManager' => [ /* ... */ ],
         */
     ],
     'params' => $params,
 ];
 
 if (YII_ENV_DEV) {
-    // configuration adjustments for 'dev' environment
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
-
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 }
+
+Yii::setAlias('@yii2-bootstrap5', dirname(__DIR__) . '/vendor/yiisoft/yii2-bootstrap5');
 
 return $config;
