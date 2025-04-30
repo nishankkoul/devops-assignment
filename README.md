@@ -25,7 +25,7 @@ To begin the deployment, we used a minimal Yii2 PHP application created using Co
 #### Step 1: Provision an Ubuntu EC2 Instance
 
 - Launch an EC2 instance with the **Ubuntu Server 22.04 LTS** AMI.
-- Choose an appropriate instance type (e.g., `t2.micro`).
+- Choose an appropriate instance type (e.g., `t2.medium`).
 - Configure the security group to allow:
   - **Port 22** (SSH)
   - **Port 80** (HTTP)
