@@ -4,10 +4,12 @@
 
   vars:
     ansible_connection: local
-    project_dir: "/home/ubuntu/pearlthoughts-devops-assignment"  # Set the path to your Yii2 project
+    project_dir: "/home/ubuntu/pearlthoughts-devops-assignment"
+    composer_path: "/usr/local/bin/composer"
 
   tasks:
-    - name: Install Docker, Docker Compose, Git, PHP, and NGINX
+
+    - name: Install required packages
       apt:
         update_cache: yes
         name:
@@ -19,6 +21,15 @@
           - php-fpm
           - php-xml
           - php-mbstring
+          - php8.3-curl
+        state: present
+
+    - name: Install additional required packages for Composer
+      apt:
+        name:
+          - zip
+          - unzip
+          - php-zip
         state: present
 
     - name: Start and enable Docker
@@ -27,7 +38,7 @@
         state: started
         enabled: yes
 
-    - name: Add user to docker group
+    - name: Add ubuntu user to Docker group
       user:
         name: ubuntu
         groups: docker
@@ -38,18 +49,24 @@
         repo: "https://github.com/nishankkoul/pearlthoughts-assignment.git"
         dest: "{{ project_dir }}"
         version: main
+        force: yes
 
     - name: Install Composer
       shell: |
         curl -sS https://getcomposer.org/installer | php
-        mv composer.phar /usr/local/bin/composer
+        mv composer.phar {{ composer_path }}
       args:
-        creates: /usr/local/bin/composer
+        creates: "{{ composer_path }}"
+
+    - name: Set Composer to use HTTPS instead of SSH for GitHub
+      command: "{{ composer_path }} config --global github-protocols https"
 
     - name: Install PHP dependencies using Composer
-      command: composer install
+      command: "{{ composer_path }} install"
       args:
         chdir: "{{ project_dir }}"
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: 1
 
     - name: Install yii2-bootstrap5 via Composer
       composer:
@@ -59,19 +76,18 @@
       environment:
         COMPOSER_ALLOW_SUPERUSER: 1
 
-    - name: Set alias for yii2-bootstrap5 in web.php
+    - name: Ensure yii2-bootstrap5 alias is set in web.php
       lineinfile:
         path: "{{ project_dir }}/config/web.php"
-        regexp: '/Yii::setAlias/'
         line: "Yii::setAlias('@yii2-bootstrap5', dirname(__DIR__) . '/vendor/yiisoft/yii2-bootstrap5');"
         insertafter: "components:"
+        state: present
 
-    - name: Initialize Docker Swarm
-      shell: |
-        docker swarm init || true
+    - name: Initialize Docker Swarm (ignore error if already initialized)
+      shell: docker swarm init || true
 
     - name: Check Docker Swarm status
-      shell: docker info | grep "Swarm"
+      shell: docker info --format '{{ "{{.Swarm.LocalNodeState}}" }}'
       register: swarm_status
       changed_when: false
 
@@ -80,21 +96,35 @@
         var: swarm_status.stdout
 
     - name: Pull the latest Docker image
-      shell: |
-        docker pull nishankkoul/pearlthoughts-devops-assignment:2.4
+      docker_image:
+        name: nishankkoul/pearlthoughts-devops-assignment
+        tag: "3.0"
+        source: pull
+
+    - name: Deploy Docker Stack using docker-compose.yml
+      shell: docker stack deploy -c docker-compose.yml myapp
       args:
         chdir: "{{ project_dir }}"
 
-    - name: Deploy Stack (if you have a docker-compose.yml in your repo)
-      shell: |
-        docker stack deploy -c docker-compose.yml myapp
-      args:
-        chdir: "{{ project_dir }}"
+    # Add tasks to kill and disable Apache2 before starting NGINX
 
+    - name: Kill Apache2 processes running on port 80
+      shell: |
+        sudo lsof -t -i :80 | xargs sudo kill -9
+      ignore_errors: yes
+
+    - name: Stop and disable apache2 service to free port 80
+      systemd:
+        name: apache2
+        state: stopped
+        enabled: no
+
+    # Configure NGINX for Yii2 App
     - name: Configure NGINX for Yii2 App
       template:
         src: "/home/ubuntu/nginx.conf.j2"
         dest: "/etc/nginx/sites-available/default"
+        mode: '0644'
 
     - name: Restart NGINX
       service:
